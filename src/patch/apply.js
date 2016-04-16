@@ -55,6 +55,21 @@ function patch(source, uniDiff, options = {}, applyOperation = '+') {
     return true;
   }
 
+  // Flip the hunk identifier values if reverting patch
+  if (addOp === '-') {
+    for (let i = 0; i < hunks.length; i++) {
+      let hunk = hunks[i],
+          lines = hunk.oldLines,
+          start = hunk.oldStart;
+
+      hunk.oldLines = hunk.newLines;
+      hunk.newLines = lines;
+
+      hunk.oldStart = hunk.newStart;
+      hunk.newStart = start;
+    }
+  }
+
   // Search best fit offsets for each hunk based on the previous ones
   for (let i = 0; i < hunks.length; i++) {
     let hunk = hunks[i],
