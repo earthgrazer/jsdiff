@@ -20,6 +20,7 @@ describe('root exports', function() {
     expect(Diff.createTwoFilesPatch).to.exist;
     expect(Diff.createPatch).to.exist;
     expect(Diff.applyPatch).to.exist;
+    expect(Diff.revertPatch).to.exist;
     expect(Diff.applyPatches).to.exist;
     expect(Diff.parsePatch).to.exist;
     expect(Diff.convertChangesToDMP).to.exist;

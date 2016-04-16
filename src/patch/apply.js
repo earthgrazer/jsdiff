@@ -1,7 +1,7 @@
 import {parsePatch} from './parse';
 import distanceIterator from '../util/distance-iterator';
 
-export function applyPatch(source, uniDiff, options = {}) {
+function patch(source, uniDiff, options = {}, applyOperation = '+') {
   if (typeof uniDiff === 'string') {
     uniDiff = parsePatch(uniDiff);
   }
@@ -25,7 +25,10 @@ export function applyPatch(source, uniDiff, options = {}) {
       offset = 0,
 
       removeEOFNL,
-      addEOFNL;
+      addEOFNL,
+
+      addOp = applyOperation === '+' ? '+' : '-',
+      removeOp = applyOperation === '+' ? '-' : '+';
 
   /**
    * Checks if the hunk exactly fits on the provided location
@@ -36,7 +39,7 @@ export function applyPatch(source, uniDiff, options = {}) {
           operation = line[0],
           content = line.substr(1);
 
-      if (operation === ' ' || operation === '-') {
+      if (operation === ' ' || operation === removeOp) {
         // Context sanity check
         if (!compareLine(toPos + 1, lines[toPos], operation, content)) {
           errorCount++;
@@ -89,17 +92,17 @@ export function applyPatch(source, uniDiff, options = {}) {
 
       if (operation === ' ') {
         toPos++;
-      } else if (operation === '-') {
+      } else if (operation === removeOp) {
         lines.splice(toPos, 1);
       /* istanbul ignore else */
-      } else if (operation === '+') {
+      } else if (operation === addOp) {
         lines.splice(toPos, 0, content);
         toPos++;
       } else if (operation === '\\') {
         let previousOperation = hunk.lines[j - 1] ? hunk.lines[j - 1][0] : null;
-        if (previousOperation === '+') {
+        if (previousOperation === addOp) {
           removeEOFNL = true;
-        } else if (previousOperation === '-') {
+        } else if (previousOperation === removeOp) {
           addEOFNL = true;
         }
       }
@@ -115,6 +118,14 @@ export function applyPatch(source, uniDiff, options = {}) {
     lines.push('');
   }
   return lines.join('\n');
+}
+
+export function applyPatch(source, uniDiff, options = {}) {
+  return patch(source, uniDiff, options);
+}
+
+export function revertPatch(source, uniDiff, options = {}) {
+  return patch(source, uniDiff, options, '-');
 }
 
 // Wrapper that supports multiple file patches via callbacks.
